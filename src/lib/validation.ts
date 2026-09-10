@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const generateRequestSchema = z.object({
   keyword: z
-    .string({ required_error: "Keyword is required" })
+    .string({ message: "Keyword is required" })
     .min(1, "Keyword cannot be empty")
     .max(200, "Keyword must be under 200 characters")
     .transform((s) =>

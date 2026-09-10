@@ -106,7 +106,6 @@ export async function POST(req: Request) {
     system: SYSTEM_PROMPT,
     prompt: `Create a comprehensive SEO content plan for the keyword: "${keyword}"`,
     temperature: 0.7,
-    maxTokens: 4096,
   });
 
   return result.toTextStreamResponse();
