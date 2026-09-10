@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   const { keyword } = parsed.data;
 
   const result = streamText({
-    model: google("gemini-2.0-flash"),
+    model: google("gemini-2.5-flash"),
     system: SYSTEM_PROMPT,
     prompt: `Create a comprehensive SEO content plan for the keyword: "${keyword}"`,
     temperature: 0.7,
