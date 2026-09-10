@@ -1,6 +1,6 @@
 "use client";
 
-import { marked, type Tokens } from "marked";
+import { marked, type Token, type Tokens } from "marked";
 import { CopyButton } from "./copy-button";
 
 interface MarkdownSectionProps {
@@ -12,26 +12,29 @@ interface MarkdownSectionProps {
 function buildRenderer() {
   const r = new marked.Renderer();
 
+  const renderTokens = (tokens: Token[]) =>
+    marked.parser(tokens, { renderer: r });
+
   r.link = function ({ href, text }: Tokens.Link) {
     return `<a href="${href}" class="text-amber-accent hover:text-amber-hover underline underline-offset-2" rel="noopener noreferrer">${text}</a>`;
   };
 
-  // marked v18 passes the full List token; render items manually
   r.list = function (token: Tokens.List) {
     const tag = token.ordered ? "ol" : "ul";
     const cls = token.ordered
-      ? "list-decimal list-outside pl-5 mb-4 space-y-1"
-      : "list-disc list-outside pl-5 mb-4 space-y-1";
+      ? "list-decimal list-outside pl-5 mb-4 space-y-2"
+      : "list-disc list-outside pl-5 mb-4 space-y-2";
 
-    const itemsHtml = token.items
-      .map((item) => {
-        // item.tokens contains inline tokens — render them
-        const inner = marked.parseInline(item.text, { renderer: r });
-        return `<li class="text-ink-secondary leading-relaxed">${inner}</li>`;
-      })
-      .join("");
+    const itemsHtml = token.items.map((item) => r.listitem(item)).join("");
 
     return `<${tag} class="${cls}">${itemsHtml}</${tag}>`;
+  };
+
+  r.listitem = function (item: Tokens.ListItem) {
+    const checkbox = item.task
+      ? `<input type="checkbox" class="mr-2 align-middle accent-amber-accent" ${item.checked ? "checked" : ""} disabled />`
+      : "";
+    return `<li class="text-ink-secondary leading-relaxed">${checkbox}${renderTokens(item.tokens)}</li>`;
   };
 
   r.heading = function ({ text, depth }: Tokens.Heading) {
@@ -56,6 +59,10 @@ function buildRenderer() {
     return `<em class="italic">${text}</em>`;
   };
 
+  r.del = function ({ text }: Tokens.Del) {
+    return `<del class="text-stone-muted">${text}</del>`;
+  };
+
   r.codespan = function ({ text }: Tokens.Codespan) {
     return `<code class="bg-stone-faint px-1.5 py-0.5 rounded text-sm font-mono font-medium text-ink">${text}</code>`;
   };
@@ -66,6 +73,31 @@ function buildRenderer() {
 
   r.blockquote = function ({ text }: Tokens.Blockquote) {
     return `<blockquote class="border-l-4 border-amber-accent pl-4 py-1 mb-4 text-stone-muted italic">${text}</blockquote>`;
+  };
+
+  r.table = function (token: Tokens.Table) {
+    const header = token.header
+      .map((cell) => r.tablecell({ ...cell, header: true }))
+      .join("");
+    const headerRow = r.tablerow({ text: header });
+    const body = token.rows
+      .map((row) => r.tablerow({ text: row.map((cell) => r.tablecell(cell)).join("") }))
+      .join("");
+
+    return `<div class="overflow-x-auto mb-4"><table class="w-full border-collapse text-left text-sm"><thead>${headerRow}</thead><tbody>${body}</tbody></table></div>`;
+  };
+
+  r.tablerow = function ({ text }: Tokens.TableRow<string>) {
+    return `<tr class="border-b border-stone-faint last:border-0">${text}</tr>`;
+  };
+
+  r.tablecell = function (cell: Tokens.TableCell) {
+    const tag = cell.header ? "th" : "td";
+    const align = cell.align ? ` style="text-align:${cell.align}"` : "";
+    const className = cell.header
+      ? "px-3 py-2 font-semibold text-ink bg-stone-faint"
+      : "px-3 py-2 text-ink-secondary align-top";
+    return `<${tag} class="${className}"${align}>${renderTokens(cell.tokens)}</${tag}>`;
   };
 
   r.hr = function () {
@@ -91,7 +123,7 @@ export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) 
         </div>
         <CopyButton text={content} />
       </div>
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="markdown-content" dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );
 }
