@@ -27,8 +27,19 @@ export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) 
   );
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderMarkdown(md: string): string {
-  let html = md
+  const safe = escapeHtml(md);
+
+  let html = safe
     .replace(/^### (.+)$/gm, '<h3 class="text-base font-bold mt-5 mb-2">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-6 mb-3">$1</h2>')
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
@@ -39,7 +50,7 @@ function renderMarkdown(md: string): string {
     )
     .replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" class="text-amber-accent hover:text-amber-hover underline underline-offset-2">$1</a>'
+      '<a href="$2" class="text-amber-accent hover:text-amber-hover underline underline-offset-2" rel="noopener noreferrer">$1</a>'
     )
     .replace(
       /^- (.+)$/gm,
@@ -55,8 +66,8 @@ function renderMarkdown(md: string): string {
   let inList = false;
 
   for (const line of lines) {
-    const isListItem = line.includes("<li");
-    const isHeading = line.includes("<h2") || line.includes("<h3");
+    const isListItem = line.includes('<li class="ml-4');
+    const isHeading = line.includes('<h2 class=') || line.includes('<h3 class=');
 
     if (isListItem && !inList) {
       processed.push("<ul>");
