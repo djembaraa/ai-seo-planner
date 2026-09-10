@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { HeroSection } from "@/components/hero-section";
 import { ResultDashboard } from "@/components/result-dashboard";
 import { ResultSkeleton } from "@/components/result-skeleton";
@@ -10,8 +10,16 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleSubmit = useCallback(async (keyword: string) => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setContent("");
     setIsLoading(true);
     setIsStreaming(true);
@@ -22,10 +30,27 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyword }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
+        const errorBody = await response.text().catch(() => "");
+        let errorMessage = `Request failed (${response.status})`;
+
+        if (response.status === 429) {
+          errorMessage = "Too many requests. Please wait a moment and try again.";
+        } else if (response.status === 400) {
+          errorMessage = "Invalid keyword. Please check your input and try again.";
+        } else if (errorBody) {
+          try {
+            const parsed = JSON.parse(errorBody) as { error?: string };
+            if (parsed.error) errorMessage = parsed.error;
+          } catch {
+            // use default message
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const reader = response.body?.getReader();
@@ -33,6 +58,7 @@ export default function Home() {
 
       const decoder = new TextDecoder();
       let accumulated = "";
+      let skeletonHidden = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -42,20 +68,29 @@ export default function Home() {
         accumulated += chunk;
         setContent(accumulated);
 
-        if (showSkeleton) {
+        if (!skeletonHidden) {
+          skeletonHidden = true;
           setShowSkeleton(false);
         }
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
+
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       setContent(
-        `## Error\n\nSomething went wrong while generating your SEO plan. Please check that your Google Gemini API key is configured and try again.\n\n**Details:** ${err instanceof Error ? err.message : "Unknown error"}`
+        `## Error\n\n${message}\n\nPlease try again. If the issue persists, verify your Google Gemini API key is configured.`
       );
     } finally {
-      setIsLoading(false);
-      setIsStreaming(false);
-      setShowSkeleton(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+        setIsStreaming(false);
+        setShowSkeleton(false);
+      }
     }
-  }, [showSkeleton]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-canvas">
