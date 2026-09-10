@@ -38,12 +38,14 @@ body {
   margin-bottom: 0;
 }
 
-.markdown-content li > p:last-child {
+.markdown-content li > p {
+  display: inline;
   margin-bottom: 0;
 }
 
 .markdown-content li > ul,
 .markdown-content li > ol {
+  display: block;
   margin-top: 0.5rem;
   margin-bottom: 0.25rem;
 }
