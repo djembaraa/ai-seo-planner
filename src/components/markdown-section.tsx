@@ -9,7 +9,7 @@ interface MarkdownSectionProps {
   content: string;
 }
 
-function buildRenderer(): marked.Renderer {
+function buildRenderer() {
   const r = new marked.Renderer();
 
   r.link = function ({ href, text }: Tokens.Link) {
