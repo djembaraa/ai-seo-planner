@@ -13,7 +13,7 @@ function buildRenderer() {
   const r = new marked.Renderer();
 
   const renderTokens = (tokens: Token[]) =>
-    marked.parser(tokens, { renderer: r });
+    marked.parser(tokens, { renderer: r, breaks: true });
 
   r.link = function ({ href, tokens }: Tokens.Link) {
     return `<a href="${href}" class="text-amber-accent hover:text-amber-hover underline underline-offset-2" rel="noopener noreferrer">${this.parser.parseInline(tokens)}</a>`;
@@ -110,7 +110,12 @@ function buildRenderer() {
 const renderer = buildRenderer();
 
 export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) {
-  const html = marked.parse(content, { renderer, async: false, gfm: true }) as string;
+  const html = marked.parse(content, {
+    renderer,
+    async: false,
+    gfm: true,
+    breaks: true,
+  }) as string;
 
   return (
     <div className="bg-surface rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">

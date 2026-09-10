@@ -28,10 +28,11 @@ Provide two groups as comma-separated tags:
 
 ## Content Ideas & Titles
 
-Provide 5 content ideas with:
-- A compelling title (under 60 chars)
-- The content format (Guide, Listicle, Comparison, Tutorial, Case Study)
-- A one-sentence hook explaining the value
+Provide 5 content ideas. Format every idea exactly as one numbered list item with these three separate lines:
+1. **Title:** A compelling title under 60 characters
+  **Format:** Guide, Listicle, Comparison, Tutorial, or Case Study
+  **Hook:** One sentence explaining the value
+Leave a line break after each label/value line so Title, Format, and Hook never appear as one paragraph.
 
 ## Content Outline
 
