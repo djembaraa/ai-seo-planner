@@ -5,9 +5,16 @@ import { useState, useRef, type FormEvent } from "react";
 interface HeroSectionProps {
   onSubmit: (keyword: string) => void;
   isLoading: boolean;
+  recentSearches: string[];
+  onClearRecent: () => void;
 }
 
-export function HeroSection({ onSubmit, isLoading }: HeroSectionProps) {
+export function HeroSection({
+  onSubmit,
+  isLoading,
+  recentSearches,
+  onClearRecent,
+}: HeroSectionProps) {
   const [keyword, setKeyword] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -19,8 +26,13 @@ export function HeroSection({ onSubmit, isLoading }: HeroSectionProps) {
     }
   };
 
+  const handleRecentClick = (term: string) => {
+    setKeyword(term);
+    onSubmit(term);
+  };
+
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden" aria-label="Keyword input">
       <div className="absolute inset-0 bg-gradient-to-br from-slate-deep via-[#1E293B] to-[#0C1222]" />
       <div
         className="absolute inset-0 opacity-[0.03]"
@@ -50,6 +62,8 @@ export function HeroSection({ onSubmit, isLoading }: HeroSectionProps) {
           onSubmit={handleSubmit}
           className="mt-10 animate-fade-up"
           style={{ animationDelay: "0.15s" }}
+          role="search"
+          aria-label="Generate SEO plan"
         >
           <div className="flex items-center gap-3 bg-white/[0.07] backdrop-blur-sm rounded-2xl p-2 sm:p-2.5">
             <input
@@ -74,6 +88,7 @@ export function HeroSection({ onSubmit, isLoading }: HeroSectionProps) {
                     className="animate-spin h-4 w-4"
                     viewBox="0 0 24 24"
                     fill="none"
+                    aria-hidden="true"
                   >
                     <circle
                       className="opacity-25"
@@ -97,6 +112,37 @@ export function HeroSection({ onSubmit, isLoading }: HeroSectionProps) {
             </button>
           </div>
         </form>
+
+        {recentSearches.length > 0 && (
+          <div
+            className="mt-6 animate-fade-up"
+            style={{ animationDelay: "0.25s" }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <p className="text-[#64748B] text-xs font-medium uppercase tracking-wider">
+                Recent
+              </p>
+              <button
+                onClick={onClearRecent}
+                className="text-[#475569] hover:text-[#94A3B8] text-xs font-medium transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {recentSearches.map((term) => (
+                <button
+                  key={term}
+                  onClick={() => handleRecentClick(term)}
+                  disabled={isLoading}
+                  className="text-[#94A3B8] hover:text-white text-xs sm:text-sm font-medium bg-white/[0.05] hover:bg-white/[0.1] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

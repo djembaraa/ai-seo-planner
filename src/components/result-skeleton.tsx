@@ -1,56 +1,70 @@
 "use client";
 
+const SKELETON_WIDTHS = [
+  ["85%", "60%", "75%"],
+  ["70%", "55%", "80%"],
+  ["90%", "65%", "72%"],
+  ["60%", "78%", "68%"],
+  ["75%", "50%", "85%"],
+];
+
+const TAG_WIDTHS = [95, 110, 80, 120, 88, 105, 92, 115, 78, 130];
+
 export function ResultSkeleton() {
   return (
-    <div className="space-y-8 animate-fade-up">
-      {["intent", "keywords", "ideas", "outline", "meta"].map((key) => (
-        <div key={key} className="bg-surface rounded-2xl p-6 sm:p-8 shadow-sm">
-          <div className="skeleton-block h-6 w-40 mb-6" />
-          {key === "keywords" ? (
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="skeleton-block h-8 rounded-full"
-                  style={{ width: `${80 + Math.random() * 60}px` }}
-                />
-              ))}
-            </div>
-          ) : key === "outline" ? (
-            <div className="space-y-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="space-y-2">
+    <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16 space-y-8 animate-fade-up">
+      {["intent", "keywords", "ideas", "outline", "meta"].map(
+        (key, sectionIdx) => (
+          <div
+            key={key}
+            className="bg-surface rounded-2xl p-6 sm:p-8 shadow-sm"
+          >
+            <div className="skeleton-block h-6 w-40 mb-6" />
+            {key === "keywords" ? (
+              <div className="flex flex-wrap gap-2">
+                {TAG_WIDTHS.map((w, i) => (
                   <div
-                    className="skeleton-block h-5 rounded"
-                    style={{ width: `${50 + Math.random() * 40}%` }}
+                    key={i}
+                    className="skeleton-block h-8 rounded-full"
+                    style={{ width: `${w}px` }}
                   />
-                  {i % 2 === 0 && (
-                    <div className="ml-6 space-y-1.5">
-                      {Array.from({ length: 2 }).map((__, j) => (
-                        <div
-                          key={j}
-                          className="skeleton-block h-4 rounded"
-                          style={{ width: `${40 + Math.random() * 35}%` }}
-                        />
-                      ))}
+                ))}
+              </div>
+            ) : key === "outline" ? (
+              <div className="space-y-4">
+                {SKELETON_WIDTHS[sectionIdx % SKELETON_WIDTHS.length].map(
+                  (width, i) => (
+                    <div key={i} className="space-y-2">
+                      <div
+                        className="skeleton-block h-5 rounded"
+                        style={{ width }}
+                      />
+                      {i % 2 === 0 && (
+                        <div className="ml-6 space-y-1.5">
+                          <div className="skeleton-block h-4 rounded w-2/5" />
+                          <div className="skeleton-block h-4 rounded w-3/5" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="skeleton-block h-4 rounded"
-                  style={{ width: `${70 + Math.random() * 25}%` }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {SKELETON_WIDTHS[sectionIdx % SKELETON_WIDTHS.length].map(
+                  (width, i) => (
+                    <div
+                      key={i}
+                      className="skeleton-block h-4 rounded"
+                      style={{ width }}
+                    />
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        )
+      )}
     </div>
   );
 }

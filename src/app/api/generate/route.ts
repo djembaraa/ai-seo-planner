@@ -1,44 +1,14 @@
 import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
+import { generateRequestSchema } from "@/lib/validation";
+import { validateEnv } from "@/lib/env";
+import {
+  getRateLimitKey,
+  checkRateLimit,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
 
 export const maxDuration = 60;
-
-const MAX_KEYWORD_LENGTH = 200;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 10;
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function getRateLimitKey(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
-  return ip;
-}
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return false;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return true;
-  }
-
-  entry.count++;
-  return false;
-}
-
-function sanitizeKeyword(input: string): string {
-  return input
-    .replace(/[<>{}[\]\\]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_KEYWORD_LENGTH);
-}
 
 const SYSTEM_PROMPT = `You are an expert SEO content strategist. Given a target keyword, produce a comprehensive SEO content plan.
 
@@ -83,12 +53,35 @@ Provide optimized:
 
 Be specific, actionable, and data-informed. Use real-world examples where possible.`;
 
+function jsonError(
+  message: string,
+  status: number,
+  extraHeaders?: Record<string, string>
+): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { "Content-Type": "application/json", ...extraHeaders },
+  });
+}
+
 export async function POST(req: Request) {
+  const env = validateEnv();
+  if (!env.valid) {
+    return jsonError(
+      `Server misconfiguration: missing ${env.missing.join(", ")}`,
+      500
+    );
+  }
+
   const rateKey = getRateLimitKey(req);
-  if (isRateLimited(rateKey)) {
-    return new Response(
-      JSON.stringify({ error: "Too many requests. Please wait a moment." }),
-      { status: 429, headers: { "Content-Type": "application/json" } }
+  const { limited, remaining, resetAt } = checkRateLimit(rateKey);
+  const headers = rateLimitHeaders(remaining, resetAt);
+
+  if (limited) {
+    return jsonError(
+      "Too many requests. Please wait a moment and try again.",
+      429,
+      headers
     );
   }
 
@@ -96,36 +89,17 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return new Response(
-      JSON.stringify({ error: "Invalid JSON body" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return jsonError("Invalid JSON body", 400, headers);
   }
 
-  const rawKeyword = (body as Record<string, unknown>)?.keyword;
+  const parsed = generateRequestSchema.safeParse(body);
 
-  if (!rawKeyword || typeof rawKeyword !== "string") {
-    return new Response(
-      JSON.stringify({ error: "Missing or invalid keyword" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0];
+    return jsonError(firstError.message, 400, headers);
   }
 
-  const keyword = sanitizeKeyword(rawKeyword);
-
-  if (keyword.length === 0) {
-    return new Response(
-      JSON.stringify({ error: "Keyword cannot be empty" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  if (keyword.length > MAX_KEYWORD_LENGTH) {
-    return new Response(
-      JSON.stringify({ error: `Keyword must be under ${MAX_KEYWORD_LENGTH} characters` }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
+  const { keyword } = parsed.data;
 
   const result = streamText({
     model: google("gemini-2.0-flash"),
