@@ -15,8 +15,8 @@ function buildRenderer() {
   const renderTokens = (tokens: Token[]) =>
     marked.parser(tokens, { renderer: r });
 
-  r.link = function ({ href, text }: Tokens.Link) {
-    return `<a href="${href}" class="text-amber-accent hover:text-amber-hover underline underline-offset-2" rel="noopener noreferrer">${text}</a>`;
+  r.link = function ({ href, tokens }: Tokens.Link) {
+    return `<a href="${href}" class="text-amber-accent hover:text-amber-hover underline underline-offset-2" rel="noopener noreferrer">${this.parser.parseInline(tokens)}</a>`;
   };
 
   r.list = function (token: Tokens.List) {
@@ -37,30 +37,30 @@ function buildRenderer() {
     return `<li class="text-ink-secondary leading-relaxed">${checkbox}${renderTokens(item.tokens)}</li>`;
   };
 
-  r.heading = function ({ text, depth }: Tokens.Heading) {
+  r.heading = function ({ tokens, depth }: Tokens.Heading) {
     const cls =
       depth === 2
         ? "text-base font-bold text-ink mt-6 mb-2"
         : depth === 3
           ? "text-sm font-bold text-ink mt-4 mb-1.5"
           : "text-sm font-semibold text-ink mt-3 mb-1";
-    return `<h${depth} class="${cls}">${text}</h${depth}>`;
+    return `<h${depth} class="${cls}">${this.parser.parseInline(tokens)}</h${depth}>`;
   };
 
-  r.paragraph = function ({ text }: Tokens.Paragraph) {
-    return `<p class="text-ink-secondary leading-relaxed mb-3">${text}</p>`;
+  r.paragraph = function ({ tokens }: Tokens.Paragraph) {
+    return `<p class="text-ink-secondary leading-relaxed mb-3">${this.parser.parseInline(tokens)}</p>`;
   };
 
-  r.strong = function ({ text }: Tokens.Strong) {
-    return `<strong class="font-semibold text-ink">${text}</strong>`;
+  r.strong = function ({ tokens }: Tokens.Strong) {
+    return `<strong class="font-semibold text-ink">${this.parser.parseInline(tokens)}</strong>`;
   };
 
-  r.em = function ({ text }: Tokens.Em) {
-    return `<em class="italic">${text}</em>`;
+  r.em = function ({ tokens }: Tokens.Em) {
+    return `<em class="italic">${this.parser.parseInline(tokens)}</em>`;
   };
 
-  r.del = function ({ text }: Tokens.Del) {
-    return `<del class="text-stone-muted">${text}</del>`;
+  r.del = function ({ tokens }: Tokens.Del) {
+    return `<del class="text-stone-muted">${this.parser.parseInline(tokens)}</del>`;
   };
 
   r.codespan = function ({ text }: Tokens.Codespan) {
