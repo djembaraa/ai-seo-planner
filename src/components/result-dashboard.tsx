@@ -77,10 +77,14 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
   if (!hasAnyContent && !isStreaming) return null;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+    <section
+      className="mx-auto max-w-3xl px-6 py-12 sm:py-16"
+      aria-label="SEO strategy results"
+      aria-live="polite"
+    >
       {isStreaming && !hasAnyContent && (
-        <div className="flex items-center gap-3 text-stone-muted text-sm font-medium animate-pulse-soft">
-          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+        <div className="flex items-center gap-3 text-stone-muted text-sm font-medium animate-fade-up">
+          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -106,6 +110,9 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
 
           {keywordTags.length > 0 && (
             <div className="animate-fade-up" style={{ animationDelay: "0.05s" }}>
+              <p className="text-xs font-semibold text-stone-muted uppercase tracking-wider mb-3">
+                Keyword Tags
+              </p>
               <TagCloud tags={keywordTags} />
             </div>
           )}
@@ -117,7 +124,7 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
             const meta = SECTION_META[title];
 
             return (
-              <div
+              <article
                 key={title}
                 className="animate-fade-up"
                 style={{ animationDelay: `${0.08 * (i + 1)}s` }}
@@ -127,18 +134,18 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
                   icon={meta?.icon ?? null}
                   content={sectionContent}
                 />
-              </div>
+              </article>
             );
           })}
 
           {isStreaming && (
             <div className="flex items-center gap-2 text-stone-muted text-xs font-medium pt-2">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-accent animate-pulse" />
-              Generating…
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-accent animate-pulse" aria-hidden="true" />
+              <span role="status">Generating…</span>
             </div>
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }
