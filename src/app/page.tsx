@@ -1,100 +1,97 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import { HeroSection } from "@/components/hero-section";
 import { ResultDashboard } from "@/components/result-dashboard";
 import { ResultSkeleton } from "@/components/result-skeleton";
+import { useSeoGenerate } from "@/lib/use-seo-generate";
+
+// Import landing components
+import { LandingTrending } from "@/components/landing/landing-trending";
+import { LandingCTA } from "@/components/landing/landing-cta";
+
+import { AlertTriangle, XCircle } from "lucide-react";
 
 export default function Home() {
-  const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [showSkeleton, setShowSkeleton] = useState(false);
+  const {
+    content,
+    isLoading,
+    isStreaming,
+    showSkeleton,
+    error,
+    recent,
+    generatePlan,
+    clearRecent
+  } = useSeoGenerate();
 
-  const handleSubmit = useCallback(async (keyword: string) => {
-    setContent("");
-    setIsLoading(true);
-    setIsStreaming(true);
-    setShowSkeleton(true);
-
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No reader available");
-
-      const decoder = new TextDecoder();
-      let accumulated = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        accumulated += chunk;
-        setContent(accumulated);
-
-        if (showSkeleton) {
-          setShowSkeleton(false);
-        }
-      }
-    } catch (err) {
-      setContent(
-        `## Error\n\nSomething went wrong while generating your SEO plan. Please check that your Google Gemini API key is configured and try again.\n\n**Details:** ${err instanceof Error ? err.message : "Unknown error"}`
-      );
-    } finally {
-      setIsLoading(false);
-      setIsStreaming(false);
-      setShowSkeleton(false);
-    }
-  }, [showSkeleton]);
+  const hasResultOrGenerating = content || isStreaming || showSkeleton || error;
 
   return (
     <div className="min-h-screen bg-canvas">
-      <nav className="absolute top-0 left-0 right-0 z-10">
-        <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-accent flex items-center justify-center">
-              <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-amber-accent focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold"
+      >
+        Skip to main content
+      </a>
+
+      <main id="main-content" role="main">
+        <HeroSection
+          onSubmit={generatePlan}
+          isLoading={isLoading}
+          recentSearches={recent}
+          onClearRecent={clearRecent}
+        />
+
+        {/* Dynamic App State Area */}
+        <div className="relative z-10">
+          {error && error === "API_TOKEN_EXHAUSTED" && (
+            <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-8" role="alert">
+              <div className="rounded-3xl bg-amber-50 p-8 border border-amber-200 shadow-sm flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-6">
+                  <AlertTriangle className="w-8 h-8 text-amber-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">API Token Exhausted</h3>
+                <p className="text-slate-600 mb-6 max-w-lg leading-relaxed">
+                  We&apos;re experiencing extremely high demand and our AI quota has temporarily run out. We cannot process your request right now.
+                </p>
+                <div className="bg-white rounded-2xl p-5 border border-amber-100 w-full max-w-lg text-left shadow-sm">
+                  <p className="text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    Developer Action Required
+                  </p>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Our AI API quota has been completely exhausted. Please contact the developer to upgrade the billing plan or add more API quota to restore the service.
+                  </p>
+                </div>
+              </div>
             </div>
-            <span className="text-white font-bold text-sm tracking-tight">
-              AI SEO Planner
-            </span>
-          </div>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#94A3B8] hover:text-white text-xs font-medium transition-colors"
-          >
-            GitHub
-          </a>
+          )}
+
+          {error && error !== "API_TOKEN_EXHAUSTED" && (
+            <div className="mx-auto max-w-3xl px-6 pt-8" role="alert" aria-live="assertive">
+              <div className="rounded-xl bg-red-50 px-4 py-3 text-sm leading-relaxed text-red-800 shadow-sm border border-red-100 flex items-start sm:items-center gap-3">
+                <XCircle className="w-5 h-5 shrink-0 mt-0.5 sm:mt-0" />
+                <span>{error}</span>
+              </div>
+            </div>
+          )}
+
+          {showSkeleton && <ResultSkeleton />}
+
+          {(content || isStreaming) && !showSkeleton && (
+            <ResultDashboard content={content} isStreaming={isStreaming} />
+          )}
         </div>
-      </nav>
 
-      <HeroSection onSubmit={handleSubmit} isLoading={isLoading} />
+        {/* Landing Page Content - Hidden when app is actively used */}
+        {!hasResultOrGenerating && (
+          <div className="flex flex-col gap-0 mt-8 w-full overflow-hidden">
+            <LandingTrending onSelectKeyword={generatePlan} />
+            <LandingCTA />
+          </div>
+        )}
+      </main>
 
-      {showSkeleton && <ResultSkeleton />}
-
-      {(content || isStreaming) && !showSkeleton && (
-        <ResultDashboard content={content} isStreaming={isStreaming} />
-      )}
-
-      <footer className="mt-auto py-8 text-center">
-        <p className="text-xs text-stone-subtle font-medium">
-          Built with Next.js, Vercel AI SDK, and Google Gemini
-        </p>
-      </footer>
     </div>
   );
 }

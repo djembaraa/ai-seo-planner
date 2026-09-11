@@ -1,65 +1,163 @@
 import { google } from "@ai-sdk/google";
+import * as Sentry from "@sentry/nextjs";
 import { streamText } from "ai";
+import { generateRequestSchema } from "@/lib/validation";
+import { validateEnv, validateEnterpriseEnv } from "@/lib/env";
+import { getTenantIdentity } from "@/lib/auth";
+import { SEO_SYSTEM_PROMPT } from "@/lib/prompts";
+import {
+  getTenantRateLimitKey,
+  checkDistributedRateLimit,
+  rateLimitHeaders,
+} from "@/lib/rate-limit";
 
 export const maxDuration = 60;
+const MAX_BODY_BYTES = 10_000;
 
-const SYSTEM_PROMPT = `You are an expert SEO content strategist. Given a target keyword, produce a comprehensive SEO content plan.
+function jsonError(
+  message: string,
+  status: number,
+  extraHeaders?: Record<string, string>
+): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { "Content-Type": "application/json", ...extraHeaders },
+  });
+}
 
-Return your response in clean Markdown with these exact sections:
+class RequestBodyTooLargeError extends Error {}
 
-## Search Intent
+function captureRouteException(stage: string, error: unknown): void {
+  Sentry.captureException(new Error(`Generation route ${stage} failed`), {
+    tags: { route: "/api/generate", stage },
+    extra: {
+      errorType: error instanceof Error ? error.name : typeof error,
+    },
+  });
+}
 
-State the primary search intent (Informational, Commercial, Transactional, or Navigational) and explain why users search for this. Include the typical user persona.
+async function readJsonBody(req: Request): Promise<unknown> {
+  if (!req.body) return JSON.parse(await req.text());
 
-## Related Keywords
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
 
-Provide two groups as comma-separated tags:
-
-**Primary Related Keywords** (8-12 terms): closely related variations with estimated search volume tier (High/Medium/Low).
-
-**Long-tail Keywords** (8-12 phrases): question-based, comparison, and modifier phrases with clear search intent.
-
-## Content Ideas & Titles
-
-Provide 5 content ideas with:
-- A compelling title (under 60 chars)
-- The content format (Guide, Listicle, Comparison, Tutorial, Case Study)
-- A one-sentence hook explaining the value
-
-## Content Outline
-
-Create a detailed H2/H3 outline for the primary pillar article. Include:
-- Suggested word count range
-- Key points under each heading
-- Internal linking opportunities
-- Featured snippet optimization notes
-
-## Meta Data
-
-Provide optimized:
-- **Title Tag** (under 60 characters)
-- **Meta Description** (under 155 characters)
-- **URL Slug**
-- **Open Graph Title** (under 90 characters)
-- **Open Graph Description**
-- **Primary Schema Types** to implement (e.g., Article, FAQ, HowTo)
-
-Be specific, actionable, and data-informed. Use real-world examples where possible.`;
-
-export async function POST(req: Request) {
-  const { keyword } = await req.json();
-
-  if (!keyword || typeof keyword !== "string") {
-    return new Response("Missing keyword", { status: 400 });
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_BODY_BYTES) {
+        await reader.cancel();
+        throw new RequestBodyTooLargeError();
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
   }
 
+  const bodyBytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bodyBytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return JSON.parse(new TextDecoder().decode(bodyBytes));
+}
+
+export async function POST(req: Request) {
+  let authResult: Awaited<ReturnType<typeof getTenantIdentity>>;
+  try {
+    authResult = await getTenantIdentity();
+  } catch (error) {
+    captureRouteException("auth", error);
+    return jsonError("Authentication service unavailable", 503);
+  }
+
+  if (authResult.status === "not-configured") {
+    return jsonError("Authentication is not configured", 503);
+  }
+  if (authResult.status === "unauthenticated") {
+    return jsonError("Authentication required", 401);
+  }
+
+  const env = validateEnv();
+  if (!env.valid) {
+    return jsonError(
+      `Server misconfiguration: missing ${env.missing.join(", ")}`,
+      500
+    );
+  }
+
+  const enterpriseEnv = validateEnterpriseEnv();
+  if (process.env.NODE_ENV === "production" && !enterpriseEnv.valid) {
+    return jsonError(
+      `Server misconfiguration: missing ${enterpriseEnv.missing.join(", ")}`,
+      500
+    );
+  }
+
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return jsonError("Content-Type must be application/json", 415);
+  }
+
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonError("Request body is too large", 413);
+  }
+
+  let body: unknown;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return jsonError("Request body is too large", 413);
+    }
+    return jsonError("Invalid JSON body", 400);
+  }
+
+  const parsed = generateRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0];
+    return jsonError(firstError.message, 400);
+  }
+
+  const rateKey = getTenantRateLimitKey(req, authResult.identity);
+  let rateLimitResult;
+  try {
+    rateLimitResult = await checkDistributedRateLimit(rateKey);
+  } catch (error) {
+    captureRouteException("rate_limit", error);
+    return jsonError("Rate limiting service unavailable", 503);
+  }
+  const { limited, remaining, resetAt } = rateLimitResult;
+  const headers = rateLimitHeaders(remaining, resetAt);
+
+  if (limited) {
+    return jsonError(
+      "Too many requests. Please wait a moment and try again.",
+      429,
+      headers
+    );
+  }
+
+  const { keyword } = parsed.data;
+  const timeoutSignal = AbortSignal.timeout(55_000);
+  const signal = AbortSignal.any([req.signal, timeoutSignal]);
   const result = streamText({
-    model: google("gemini-2.0-flash"),
-    system: SYSTEM_PROMPT,
-    prompt: `Create a comprehensive SEO content plan for the keyword: "${keyword.trim()}"`,
+    model: google("gemini-2.5-flash"),
+    system: SEO_SYSTEM_PROMPT,
+    prompt: `Create a comprehensive SEO content plan for the keyword: ${JSON.stringify(keyword)}`,
     temperature: 0.7,
-    maxTokens: 4096,
+    maxOutputTokens: 5000,
+    abortSignal: signal,
+    onError: ({ error }) => {
+      captureRouteException("generation", error);
+    },
   });
 
-  return result.toTextStreamResponse();
+  return result.toTextStreamResponse({ headers });
 }

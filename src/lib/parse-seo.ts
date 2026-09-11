@@ -12,7 +12,8 @@ export function parseSeoSections(markdown: string) {
     const heading = headings[i];
     const nextHeading = headings[i + 1];
 
-    const startRegex = new RegExp(`##\\s*${escapeRegex(heading)}\\s*\\n`, "i");
+    // Match ## heading with optional trailing whitespace/newline
+    const startRegex = new RegExp(`##\\s*${escapeRegex(heading)}\\s*(?:\\n|$)`, "i");
     const startMatch = markdown.match(startRegex);
 
     if (startMatch) {
@@ -45,32 +46,30 @@ function escapeRegex(str: string): string {
 
 export function extractTags(section: string): string[] {
   const tags: string[] = [];
-  const boldPattern = /\*\*([^*]+)\*\*/g;
-  let match;
 
-  while ((match = boldPattern.exec(section)) !== null) {
-    const text = match[1].trim();
-    if (
-      text.length > 2 &&
-      !text.includes(":") &&
-      !text.startsWith("Primary") &&
-      !text.startsWith("Long-tail")
-    ) {
-      tags.push(text);
+  // Process line by line — keywords can be on the same line as a **Label**
+  for (const rawLine of section.split("\n")) {
+    // Strip leading bold label like "**Primary Related Keywords**" or "**Long-tail Keywords**"
+    const line = rawLine.replace(/^\*\*[^*]+\*\*\s*/, "").trim();
+    if (!line || line.startsWith("#")) continue;
+
+    // Split by comma, clean each token
+    for (const token of line.split(",")) {
+      const clean = token
+        .trim()
+        // Remove markdown bold/italic markers
+        .replace(/\*+/g, "")
+        // Remove list prefixes
+        .replace(/^[-•*]\s*/, "")
+        // Remove volume tiers like "(High)", "(Medium)", "(Low/Medium)"
+        .replace(/\s*\([^)]*\)\s*$/, "")
+        .trim();
+
+      if (clean.length > 2 && clean.length < 60) {
+        tags.push(clean);
+      }
     }
   }
 
-  const commaItems = section
-    .split("\n")
-    .filter((line) => !line.startsWith("**") && !line.startsWith("#"))
-    .flatMap((line) =>
-      line
-        .split(",")
-        .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
-        .filter((s) => s.length > 2 && s.length < 60)
-    );
-
-  tags.push(...commaItems);
-
-  return [...new Set(tags)].slice(0, 24);
+  return [...new Set(tags)].slice(0, 20);
 }
