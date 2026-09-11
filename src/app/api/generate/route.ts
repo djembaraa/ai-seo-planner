@@ -83,9 +83,6 @@ export async function POST(req: Request) {
   if (authResult.status === "unauthenticated") {
     return jsonError("Authentication required", 401);
   }
-  if (authResult.status === "organization-required") {
-    return jsonError("An active organization is required", 403);
-  }
 
   const env = validateEnv();
   if (!env.valid) {

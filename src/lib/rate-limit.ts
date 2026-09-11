@@ -47,9 +47,10 @@ export function getRateLimitKey(req: Request): string {
 
 export function getTenantRateLimitKey(
   req: Request,
-  identity: { orgId: string; userId: string }
+  identity: { orgId?: string | null; userId: string }
 ): string {
-  return `org:${identity.orgId}:user:${identity.userId}:ip:${getRateLimitKey(req)}`;
+  const orgPart = identity.orgId ? `org:${identity.orgId}:` : '';
+  return `${orgPart}user:${identity.userId}:ip:${getRateLimitKey(req)}`;
 }
 
 export function checkRateLimit(key: string): {
