@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -9,9 +11,6 @@ const montserrat = Montserrat({
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-const SITE_URL = "https://ai-seo-planner.vercel.app";
-const SITE_NAME = "AI SEO Content Planner";
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -20,18 +19,6 @@ export const metadata: Metadata = {
   },
   description:
     "Generate comprehensive SEO content strategies in seconds. Get search intent analysis, keyword clusters, content outlines, meta data, and article titles powered by AI.",
-  keywords: [
-    "SEO content planner",
-    "keyword strategy generator",
-    "AI SEO tool",
-    "content outline generator",
-    "search intent analysis",
-    "long-tail keyword finder",
-    "SEO meta data generator",
-    "content strategy AI",
-    "SEO article planner",
-    "free SEO tool",
-  ],
   authors: [{ name: "AI SEO Content Planner" }],
   creator: "AI SEO Content Planner",
   publisher: "AI SEO Content Planner",
@@ -56,7 +43,7 @@ export const metadata: Metadata = {
       "Generate comprehensive SEO content strategies in seconds. Search intent, keyword clusters, content outlines, and meta data — all powered by AI.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "AI SEO Content Planner — Generate SEO strategies with AI",
@@ -68,12 +55,11 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — Free AI-Powered SEO Strategy Generator`,
     description:
       "Generate comprehensive SEO content strategies in seconds. Search intent, keyword clusters, content outlines, and meta data — all powered by AI.",
-    images: ["/og-image.png"],
+    images: ["/opengraph-image"],
   },
   alternates: {
     canonical: SITE_URL,
   },
-  verification: {},
 };
 
 const jsonLd = {
@@ -114,6 +100,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.variable} font-sans antialiased`}>
         {children}
+        <SiteFooter />
       </body>
     </html>
   );

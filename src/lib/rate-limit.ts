@@ -23,9 +23,21 @@ function cleanup(): void {
 }
 
 export function getRateLimitKey(req: Request): string {
-  const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
-  return ip;
+  const forwarded =
+    req.headers.get("x-vercel-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for");
+  const candidate = forwarded?.split(",")[0]?.trim() || "unknown";
+
+  if (
+    candidate === "unknown" ||
+    /^(?:\d{1,3}\.){3}\d{1,3}$/.test(candidate) ||
+    /^[0-9a-f:]+$/i.test(candidate)
+  ) {
+    return candidate;
+  }
+
+  return "unknown";
 }
 
 export function checkRateLimit(key: string): {

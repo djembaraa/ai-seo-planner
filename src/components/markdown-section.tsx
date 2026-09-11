@@ -1,6 +1,7 @@
 "use client";
 
 import { marked, type Token, type Tokens } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 import { CopyButton } from "./copy-button";
 
 interface MarkdownSectionProps {
@@ -72,7 +73,7 @@ function buildRenderer() {
   };
 
   r.blockquote = function ({ text }: Tokens.Blockquote) {
-    return `<blockquote class="border-l-4 border-amber-accent pl-4 py-1 mb-4 text-stone-muted italic">${text}</blockquote>`;
+    return `<blockquote class="bg-amber-light pl-4 py-2 mb-4 text-stone-muted italic rounded-r-lg">${text}</blockquote>`;
   };
 
   r.table = function (token: Tokens.Table) {
@@ -84,11 +85,11 @@ function buildRenderer() {
       .map((row) => r.tablerow({ text: row.map((cell) => r.tablecell(cell)).join("") }))
       .join("");
 
-    return `<div class="overflow-x-auto mb-4"><table class="w-full border-collapse text-left text-sm"><thead>${headerRow}</thead><tbody>${body}</tbody></table></div>`;
+    return `<div class="overflow-x-auto mb-4"><table class="w-full text-left text-sm"><thead>${headerRow}</thead><tbody>${body}</tbody></table></div>`;
   };
 
   r.tablerow = function ({ text }: Tokens.TableRow<string>) {
-    return `<tr class="border-b border-stone-faint last:border-0">${text}</tr>`;
+    return `<tr>${text}</tr>`;
   };
 
   r.tablecell = function (cell: Tokens.TableCell) {
@@ -101,7 +102,7 @@ function buildRenderer() {
   };
 
   r.hr = function () {
-    return `<hr class="border-stone-faint my-4" />`;
+    return `<div class="my-4 h-px bg-stone-faint" role="separator"></div>`;
   };
 
   return r;
@@ -116,6 +117,11 @@ export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) 
     gfm: true,
     breaks: true,
   }) as string;
+  const safeHtml = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ["form", "iframe", "object", "script", "style"],
+    FORBID_ATTR: ["action", "formaction", "onerror", "onclick", "onload"],
+  });
 
   return (
     <div className="bg-surface rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
@@ -128,7 +134,7 @@ export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) 
         </div>
         <CopyButton text={content} />
       </div>
-      <div className="markdown-content" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="markdown-content" dangerouslySetInnerHTML={{ __html: safeHtml }} />
     </div>
   );
 }

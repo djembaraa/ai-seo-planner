@@ -93,11 +93,11 @@ content marketing, digital marketing, marketing strategy, content creation, cont
     expect(contentMarketingCount).toBe(1);
   });
 
-  it("limits tags to 24", () => {
+  it("limits tags to 20", () => {
     const many = Array.from({ length: 30 }, (_, i) => `keyword-${i}`).join(
       ", "
     );
     const tags = extractTags(many);
-    expect(tags.length).toBeLessThanOrEqual(24);
+    expect(tags.length).toBeLessThanOrEqual(20);
   });
 });

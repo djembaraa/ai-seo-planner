@@ -33,17 +33,11 @@ export function HeroSection({
 
   return (
     <section className="relative overflow-hidden" aria-label="Keyword input">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-deep via-[#1E293B] to-[#0C1222]" />
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-          backgroundSize: "32px 32px",
-        }}
-      />
+      <div className="absolute inset-0 bg-hero-gradient" />
+      <div className="hero-grid absolute inset-0" />
       <div className="relative mx-auto max-w-3xl px-6 py-24 sm:py-32 lg:py-40">
         <div className="animate-fade-up">
-          <p className="text-amber-accent text-sm font-semibold tracking-widest uppercase mb-6">
+          <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-accent">
             AI-Powered SEO Strategy
           </p>
           <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight">
@@ -51,7 +45,7 @@ export function HeroSection({
             <br />
             that rank.
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-[#94A3B8] leading-relaxed max-w-xl font-light">
+          <p className="mt-6 max-w-xl text-lg font-light leading-relaxed text-on-dark-muted sm:text-xl">
             Enter a target keyword and get a full SEO content strategy —
             search intent, keyword clusters, outlines, and meta data —
             streamed in real time.
@@ -65,16 +59,17 @@ export function HeroSection({
           role="search"
           aria-label="Generate SEO plan"
         >
-          <div className="flex items-center gap-3 bg-white/[0.07] backdrop-blur-sm rounded-2xl p-2 sm:p-2.5">
+          <div className="flex items-center gap-3 rounded-2xl bg-hero-glass p-2 backdrop-blur-sm sm:p-2.5">
             <input
               ref={inputRef}
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="e.g. content marketing strategy"
-              className="flex-1 bg-transparent text-white placeholder:text-[#64748B] text-base sm:text-lg px-4 py-3 outline-none min-w-0"
+              className="flex-1 min-w-0 rounded-lg bg-transparent px-4 py-3 text-base text-on-dark placeholder:text-on-dark-faint outline-none focus-visible:bg-on-dark-focus sm:text-lg"
               disabled={isLoading}
               aria-label="Target keyword"
+              aria-describedby="keyword-help"
               autoComplete="off"
             />
             <button
@@ -111,6 +106,9 @@ export function HeroSection({
               )}
             </button>
           </div>
+          <p id="keyword-help" className="mt-2 px-1 text-xs text-on-dark-muted">
+            We use your keyword to build an evidence-informed content plan.
+          </p>
         </form>
 
         {recentSearches.length > 0 && (
@@ -119,12 +117,12 @@ export function HeroSection({
             style={{ animationDelay: "0.25s" }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <p className="text-[#64748B] text-xs font-medium uppercase tracking-wider">
+              <p className="text-xs font-medium uppercase tracking-wider text-on-dark-faint">
                 Recent
               </p>
               <button
                 onClick={onClearRecent}
-                className="text-[#475569] hover:text-[#94A3B8] text-xs font-medium transition-colors cursor-pointer"
+                className="cursor-pointer text-xs font-medium text-on-dark-subtle transition-colors hover:text-on-dark-muted"
               >
                 Clear
               </button>
@@ -135,7 +133,7 @@ export function HeroSection({
                   key={term}
                   onClick={() => handleRecentClick(term)}
                   disabled={isLoading}
-                  className="text-[#94A3B8] hover:text-white text-xs sm:text-sm font-medium bg-white/[0.05] hover:bg-white/[0.1] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
+                  className="cursor-pointer rounded-lg bg-hero-glass px-3 py-1.5 text-xs font-medium text-on-dark-muted transition-colors hover:bg-hero-glass-hover hover:text-on-dark disabled:opacity-40 sm:text-sm"
                 >
                   {term}
                 </button>

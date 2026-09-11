@@ -2,6 +2,7 @@ import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 import { generateRequestSchema } from "@/lib/validation";
 import { validateEnv } from "@/lib/env";
+import { SEO_SYSTEM_PROMPT } from "@/lib/prompts";
 import {
   getRateLimitKey,
   checkRateLimit,
@@ -9,50 +10,7 @@ import {
 } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
-
-const SYSTEM_PROMPT = `You are an expert SEO content strategist. Given a target keyword, produce a comprehensive SEO content plan.
-
-Return your response in clean Markdown with these exact sections:
-
-## Search Intent
-
-State the primary search intent (Informational, Commercial, Transactional, or Navigational) and explain why users search for this. Include the typical user persona.
-
-## Related Keywords
-
-Provide two groups as comma-separated tags:
-
-**Primary Related Keywords** (8-12 terms): closely related variations with estimated search volume tier (High/Medium/Low).
-
-**Long-tail Keywords** (8-12 phrases): question-based, comparison, and modifier phrases with clear search intent.
-
-## Content Ideas & Titles
-
-Provide 5 content ideas. Format every idea exactly as one numbered list item with these three separate lines:
-1. **Title:** A compelling title under 60 characters
-  **Format:** Guide, Listicle, Comparison, Tutorial, or Case Study
-  **Hook:** One sentence explaining the value
-Leave a line break after each label/value line so Title, Format, and Hook never appear as one paragraph.
-
-## Content Outline
-
-Create a detailed H2/H3 outline for the primary pillar article. Include:
-- Suggested word count range
-- Key points under each heading
-- Internal linking opportunities
-- Featured snippet optimization notes
-
-## Meta Data
-
-Provide optimized:
-- **Title Tag** (under 60 characters)
-- **Meta Description** (under 155 characters)
-- **URL Slug**
-- **Open Graph Title** (under 90 characters)
-- **Open Graph Description**
-- **Primary Schema Types** to implement (e.g., Article, FAQ, HowTo)
-
-Be specific, actionable, and data-informed. Use real-world examples where possible.`;
+const MAX_BODY_BYTES = 10_000;
 
 function jsonError(
   message: string,
@@ -65,6 +23,40 @@ function jsonError(
   });
 }
 
+class RequestBodyTooLargeError extends Error {}
+
+async function readJsonBody(req: Request): Promise<unknown> {
+  if (!req.body) return JSON.parse(await req.text());
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_BODY_BYTES) {
+        await reader.cancel();
+        throw new RequestBodyTooLargeError();
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bodyBytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bodyBytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return JSON.parse(new TextDecoder().decode(bodyBytes));
+}
+
 export async function POST(req: Request) {
   const env = validateEnv();
   if (!env.valid) {
@@ -72,6 +64,31 @@ export async function POST(req: Request) {
       `Server misconfiguration: missing ${env.missing.join(", ")}`,
       500
     );
+  }
+
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return jsonError("Content-Type must be application/json", 415);
+  }
+
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonError("Request body is too large", 413);
+  }
+
+  let body: unknown;
+  try {
+    body = await readJsonBody(req);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return jsonError("Request body is too large", 413);
+    }
+    return jsonError("Invalid JSON body", 400);
+  }
+
+  const parsed = generateRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0];
+    return jsonError(firstError.message, 400);
   }
 
   const rateKey = getRateLimitKey(req);
@@ -86,28 +103,17 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return jsonError("Invalid JSON body", 400, headers);
-  }
-
-  const parsed = generateRequestSchema.safeParse(body);
-
-  if (!parsed.success) {
-    const firstError = parsed.error.issues[0];
-    return jsonError(firstError.message, 400, headers);
-  }
-
   const { keyword } = parsed.data;
-
+  const timeoutSignal = AbortSignal.timeout(55_000);
+  const signal = AbortSignal.any([req.signal, timeoutSignal]);
   const result = streamText({
     model: google("gemini-2.5-flash"),
-    system: SYSTEM_PROMPT,
-    prompt: `Create a comprehensive SEO content plan for the keyword: "${keyword}"`,
+    system: SEO_SYSTEM_PROMPT,
+    prompt: `Create a comprehensive SEO content plan for the keyword: ${JSON.stringify(keyword)}`,
     temperature: 0.7,
+    maxOutputTokens: 5000,
+    abortSignal: signal,
   });
 
-  return result.toTextStreamResponse();
+  return result.toTextStreamResponse({ headers });
 }

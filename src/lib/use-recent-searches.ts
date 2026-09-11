@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { startTransition, useState, useEffect, useCallback } from "react";
+import { RECENT_SEARCH_LIMIT } from "@/lib/constants";
 
 const STORAGE_KEY = "seo-planner-recent";
-const MAX_ITEMS = 3;
 
 export function useRecentSearches() {
   const [recent, setRecent] = useState<string[]>([]);
@@ -14,7 +14,10 @@ export function useRecentSearches() {
       if (stored) {
         const parsed = JSON.parse(stored) as unknown;
         if (Array.isArray(parsed)) {
-          setRecent(parsed.filter((s) => typeof s === "string").slice(0, MAX_ITEMS));
+          const recentSearches = parsed
+            .filter((s) => typeof s === "string")
+            .slice(0, RECENT_SEARCH_LIMIT);
+          startTransition(() => setRecent(recentSearches));
         }
       }
     } catch {
@@ -25,7 +28,7 @@ export function useRecentSearches() {
   const addRecent = useCallback((keyword: string) => {
     setRecent((prev) => {
       const filtered = prev.filter((s) => s !== keyword);
-      const updated = [keyword, ...filtered].slice(0, MAX_ITEMS);
+      const updated = [keyword, ...filtered].slice(0, RECENT_SEARCH_LIMIT);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch {

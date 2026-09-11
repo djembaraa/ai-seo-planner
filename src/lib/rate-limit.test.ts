@@ -24,6 +24,23 @@ describe("getRateLimitKey", () => {
     const req = new Request("http://localhost/api/generate");
     expect(getRateLimitKey(req)).toBe("unknown");
   });
+
+  it("prefers the hosting platform address", () => {
+    const req = new Request("http://localhost/api/generate", {
+      headers: {
+        "x-vercel-forwarded-for": "192.0.2.10",
+        "x-forwarded-for": "198.51.100.20",
+      },
+    });
+    expect(getRateLimitKey(req)).toBe("192.0.2.10");
+  });
+
+  it("rejects malformed forwarded identities", () => {
+    const req = new Request("http://localhost/api/generate", {
+      headers: { "x-forwarded-for": "not-an-ip" },
+    });
+    expect(getRateLimitKey(req)).toBe("unknown");
+  });
 });
 
 describe("checkRateLimit", () => {

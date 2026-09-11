@@ -28,7 +28,7 @@ AI SEO Planner is a full-stack web application that turns a single keyword into 
 - 📄 **Content Outline** — Detailed H2/H3 pillar article structure with word count, internal linking, and featured snippet notes
 - 🧬 **Meta Data** — Optimized title tag, meta description, URL slug, Open Graph fields, and schema type recommendations
 - ⚡ **Real-time Streaming** — Results stream token by token directly to the UI with no full-page reload
-- 🕐 **Recent Searches** — Persists the last 5 keywords locally for quick re-generation
+- 🕐 **Recent Searches** — Persists the last 3 keywords locally for quick re-generation
 - 🛡️ **Rate Limiting** — Built-in IP-based rate limiter (10 requests / 60 s) with standard `X-RateLimit-*` response headers
 - ✅ **Input Validation** — Server-side Zod schema with sanitization strips dangerous characters before reaching the model
 
@@ -49,7 +49,7 @@ AI SEO Planner is a full-stack web application that turns a single keyword into 
 
 ### Prerequisites
 
-- **Node.js** 18.17 or later
+- **Node.js** 20.9 or later (Node.js 22+ recommended)
 - A free **Google Gemini API key** → [Get one at Google AI Studio](https://aistudio.google.com/apikey)
 
 ### 1. Clone the repository
@@ -75,6 +75,7 @@ Open `.env.local` and add your API key:
 
 ```env
 GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 ### 4. Start the development server
