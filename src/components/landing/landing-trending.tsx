@@ -79,7 +79,7 @@ export function LandingTrending({ onSelectKeyword }: LandingTrendingProps) {
                   window.scrollTo({ top: 0, behavior: "smooth" });
                   onSelectKeyword(item.keyword);
                 }}
-                className="min-w-[280px] sm:min-w-[340px] bg-slate-deep rounded-3xl p-8 cursor-pointer group hover:shadow-2xl hover:shadow-slate-deep/20 transition-all snap-start relative overflow-hidden flex flex-col"
+                className="min-w-[280px] sm:min-w-[340px] bg-slate-deep rounded-3xl p-6 cursor-pointer group hover:shadow-2xl hover:shadow-slate-deep/20 transition-all snap-start relative overflow-hidden flex flex-col"
               >
                 {/* Decorative corner */}
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-amber-accent/10 transition-colors" />
