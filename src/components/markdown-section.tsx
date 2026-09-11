@@ -1,6 +1,7 @@
 "use client";
 
 import { marked, type Token, type Tokens } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 import { CopyButton } from "./copy-button";
 
 interface MarkdownSectionProps {
@@ -116,6 +117,11 @@ export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) 
     gfm: true,
     breaks: true,
   }) as string;
+  const safeHtml = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ["form", "iframe", "object", "script", "style"],
+    FORBID_ATTR: ["action", "formaction", "onerror", "onclick", "onload"],
+  });
 
   return (
     <div className="bg-surface rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
@@ -128,7 +134,7 @@ export function MarkdownSection({ title, icon, content }: MarkdownSectionProps) 
         </div>
         <CopyButton text={content} />
       </div>
-      <div className="markdown-content" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="markdown-content" dangerouslySetInnerHTML={{ __html: safeHtml }} />
     </div>
   );
 }

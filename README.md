@@ -49,7 +49,7 @@ AI SEO Planner is a full-stack web application that turns a single keyword into 
 
 ### Prerequisites
 
-- **Node.js** 18.17 or later
+- **Node.js** 20.9 or later (Node.js 22+ recommended)
 - A free **Google Gemini API key** → [Get one at Google AI Studio](https://aistudio.google.com/apikey)
 
 ### 1. Clone the repository
@@ -75,6 +75,7 @@ Open `.env.local` and add your API key:
 
 ```env
 GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 ### 4. Start the development server

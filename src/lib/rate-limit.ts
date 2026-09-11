@@ -23,8 +23,9 @@ function cleanup(): void {
 }
 
 export function getRateLimitKey(req: Request): string {
+  const trustedProxyIp = req.headers.get("x-real-ip");
   const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+  const ip = trustedProxyIp?.trim() || forwarded?.split(",")[0]?.trim() || "unknown";
   return ip;
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -8,9 +9,6 @@ const montserrat = Montserrat({
   display: "swap",
   weight: ["300", "400", "500", "600", "700", "800"],
 });
-
-const SITE_URL = "https://ai-seo-planner.vercel.app";
-const SITE_NAME = "AI SEO Content Planner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

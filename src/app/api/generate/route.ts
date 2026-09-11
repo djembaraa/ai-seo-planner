@@ -9,6 +9,7 @@ import {
 } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
+const MAX_BODY_BYTES = 10_000;
 
 const SYSTEM_PROMPT = `You are an expert SEO content strategist. Given a target keyword, produce a comprehensive SEO content plan.
 
@@ -50,7 +51,7 @@ Provide optimized:
 - **URL Slug**
 - **Open Graph Title** (under 90 characters)
 - **Open Graph Description**
-- **Primary Schema Types** to implement (e.g., Article, FAQ, HowTo)
+- **Primary Schema Types** to implement (e.g., Article, Product, LocalBusiness)
 
 Be specific, actionable, and data-informed. Use real-world examples where possible.`;
 
@@ -86,9 +87,22 @@ export async function POST(req: Request) {
     );
   }
 
+  if (!req.headers.get("content-type")?.includes("application/json")) {
+    return jsonError("Content-Type must be application/json", 415, headers);
+  }
+
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonError("Request body is too large", 413, headers);
+  }
+
   let body: unknown;
   try {
-    body = await req.json();
+    const rawBody = await req.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+      return jsonError("Request body is too large", 413, headers);
+    }
+    body = JSON.parse(rawBody);
   } catch {
     return jsonError("Invalid JSON body", 400, headers);
   }
@@ -102,12 +116,15 @@ export async function POST(req: Request) {
 
   const { keyword } = parsed.data;
 
+  const timeoutSignal = AbortSignal.timeout(55_000);
+  const signal = AbortSignal.any([req.signal, timeoutSignal]);
   const result = streamText({
     model: google("gemini-2.5-flash"),
     system: SYSTEM_PROMPT,
     prompt: `Create a comprehensive SEO content plan for the keyword: "${keyword}"`,
     temperature: 0.7,
+    abortSignal: signal,
   });
 
-  return result.toTextStreamResponse();
+  return result.toTextStreamResponse({ headers });
 }

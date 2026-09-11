@@ -73,6 +73,18 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
   ];
 
   const hasAnyContent = Object.keys(sections).length > 0;
+  const progressSteps = [
+    { section: "Search Intent", label: "Mapping search intent and audience needs" },
+    { section: "Related Keywords", label: "Exploring keyword opportunities" },
+    { section: "Content Ideas & Titles", label: "Developing content angles that can compete" },
+    { section: "Content Outline", label: "Structuring a useful, search-ready article" },
+    { section: "Meta Data", label: "Polishing on-page SEO recommendations" },
+  ];
+  const activeStep = Math.max(
+    0,
+    progressSteps.findIndex(({ section }) => !sections[section])
+  );
+  const progress = Math.round(((activeStep + 1) / progressSteps.length) * 100);
 
   if (!hasAnyContent && !isStreaming) return null;
 
@@ -83,13 +95,11 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
       aria-live="polite"
     >
       {isStreaming && !hasAnyContent && (
-        <div className="flex items-center gap-3 text-stone-muted text-sm font-medium animate-fade-up">
-          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          Analyzing keyword and building your strategy…
-        </div>
+        <GenerationStatus label="Analyzing your keyword and planning the strategy" progress={8} />
+      )}
+
+      {isStreaming && hasAnyContent && (
+        <GenerationStatus label={progressSteps[activeStep].label} progress={progress} />
       )}
 
       {hasAnyContent && (
@@ -147,5 +157,36 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
         </div>
       )}
     </section>
+  );
+}
+
+function GenerationStatus({ label, progress }: { label: string; progress: number }) {
+  return (
+    <div
+      className="mb-6 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 animate-fade-up"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-3 text-sm font-semibold text-amber-900">
+        <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-accent opacity-60" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-accent" />
+        </span>
+        {label}
+      </div>
+      <div
+        className="mt-2 h-1.5 overflow-hidden rounded-full bg-amber-100"
+        role="progressbar"
+        aria-label={`${progress}% complete`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progress}
+      >
+        <div
+          className="h-full rounded-full bg-amber-accent transition-[width] duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
   );
 }

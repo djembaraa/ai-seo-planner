@@ -72,9 +72,10 @@ export function HeroSection({
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="e.g. content marketing strategy"
-              className="flex-1 bg-transparent text-white placeholder:text-[#64748B] text-base sm:text-lg px-4 py-3 outline-none min-w-0"
+              className="flex-1 min-w-0 rounded-lg bg-transparent px-4 py-3 text-base text-white placeholder:text-[#64748B] outline-none focus-visible:ring-2 focus-visible:ring-amber-accent/80 sm:text-lg"
               disabled={isLoading}
               aria-label="Target keyword"
+              aria-describedby="keyword-help"
               autoComplete="off"
             />
             <button
@@ -111,6 +112,9 @@ export function HeroSection({
               )}
             </button>
           </div>
+          <p id="keyword-help" className="mt-2 px-1 text-xs text-[#94A3B8]">
+            We use your keyword to build an evidence-informed content plan.
+          </p>
         </form>
 
         {recentSearches.length > 0 && (

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback, useRef } from "react";
 import { HeroSection } from "@/components/hero-section";
 import { ResultDashboard } from "@/components/result-dashboard";
@@ -11,6 +12,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const [error, setError] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   const { recent, addRecent, clearRecent } = useRecentSearches();
 
@@ -24,6 +26,7 @@ export default function Home() {
       abortRef.current = controller;
 
       setContent("");
+      setError("");
       setIsLoading(true);
       setIsStreaming(true);
       setShowSkeleton(true);
@@ -90,8 +93,8 @@ export default function Home() {
 
         const message =
           err instanceof Error ? err.message : "An unexpected error occurred";
-        setContent(
-          `## Error\n\n${message}\n\nPlease try again. If the issue persists, verify your Google Gemini API key is configured.`
+        setError(
+          `${message} Please try again. If the issue persists, verify your Google Gemini API key is configured.`
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -118,7 +121,7 @@ export default function Home() {
           className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between"
           aria-label="Main navigation"
         >
-          <a href="/" className="flex items-center gap-2.5" aria-label="Home">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Home">
             <div className="w-8 h-8 rounded-lg bg-amber-accent flex items-center justify-center">
               <svg
                 className="w-4.5 h-4.5 text-white"
@@ -138,7 +141,7 @@ export default function Home() {
             <span className="text-white font-bold text-sm tracking-tight">
               AI SEO Planner
             </span>
-          </a>
+          </Link>
           <a
             href="https://github.com/djembaraa/ai-seo-planner"
             target="_blank"
@@ -157,6 +160,14 @@ export default function Home() {
           recentSearches={recent}
           onClearRecent={clearRecent}
         />
+
+        {error && (
+          <div className="mx-auto max-w-3xl px-6 pt-8" role="alert" aria-live="assertive">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-relaxed text-red-800">
+              {error}
+            </div>
+          </div>
+        )}
 
         {showSkeleton && <ResultSkeleton />}
 
