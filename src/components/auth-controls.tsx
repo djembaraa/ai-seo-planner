@@ -1,5 +1,4 @@
 import {
-  OrganizationSwitcher,
   Show,
   SignInButton,
   SignUpButton,
@@ -24,11 +23,6 @@ export function AuthControls() {
         </SignUpButton>
       </Show>
       <Show when="signed-in">
-        <OrganizationSwitcher
-          hidePersonal
-          afterCreateOrganizationUrl="/"
-          afterSelectOrganizationUrl="/"
-        />
         <UserButton />
       </Show>
     </div>
