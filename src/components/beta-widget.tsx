@@ -6,24 +6,19 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function BetaWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(true);
 
   // Use useEffect to prevent hydration mismatch
   useEffect(() => {
     const dismissed = localStorage.getItem("beta_widget_dismissed");
     if (!dismissed) {
-      setIsDismissed(false);
       // Automatically open after 2.5 seconds
       const timer = setTimeout(() => setIsOpen(true), 2500);
       return () => clearTimeout(timer);
     }
   }, []);
 
-  if (isDismissed) return null;
-
-  const handleDismiss = () => {
+  const handleMinimize = () => {
     setIsOpen(false);
-    setIsDismissed(true);
     localStorage.setItem("beta_widget_dismissed", "true");
   };
 
@@ -39,7 +34,7 @@ export function BetaWidget() {
             className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 w-[340px] sm:w-[380px] mb-4 relative"
           >
             <button
-              onClick={handleDismiss}
+              onClick={handleMinimize}
               className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors"
               aria-label="Close widget"
             >
@@ -80,7 +75,7 @@ export function BetaWidget() {
             </div>
 
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={handleMinimize}
               className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors"
             >
               Got it, thanks!

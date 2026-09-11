@@ -131,8 +131,20 @@ export function useSeoGenerate() {
             ? err.message
             : "An unexpected error occurred";
         
+        const isQuotaError = 
+          message.toLowerCase().includes("quota") || 
+          message.toLowerCase().includes("exhausted") ||
+          message.toLowerCase().includes("429") ||
+          message.toLowerCase().includes("token") ||
+          message.toLowerCase().includes("rate limit") ||
+          message.toLowerCase().includes("server error");
+
         setContent("");
-        setError(`${message} Please try again. If the issue persists, verify your Google Gemini API key is configured.`);
+        if (isQuotaError) {
+          setError("API_TOKEN_EXHAUSTED");
+        } else {
+          setError(`${message} Please try again. If the issue persists, verify your Google Gemini API key is configured.`);
+        }
       } finally {
         window.clearTimeout(timeoutId);
         await reader?.cancel().catch(() => undefined);
