@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { checkRateLimit, getRateLimitKey, rateLimitHeaders } from "./rate-limit";
+import {
+  checkRateLimit,
+  getRateLimitKey,
+  getTenantRateLimitKey,
+  rateLimitHeaders,
+} from "./rate-limit";
 
 function makeRequest(ip: string = "127.0.0.1"): Request {
   return new Request("http://localhost/api/generate", {
@@ -40,6 +45,17 @@ describe("getRateLimitKey", () => {
       headers: { "x-forwarded-for": "not-an-ip" },
     });
     expect(getRateLimitKey(req)).toBe("unknown");
+  });
+});
+
+describe("getTenantRateLimitKey", () => {
+  it("scopes the key to organization, user, and IP", () => {
+    expect(
+      getTenantRateLimitKey(makeRequest("192.0.2.10"), {
+        orgId: "org_123",
+        userId: "user_456",
+      })
+    ).toBe("org:org_123:user:user_456:ip:192.0.2.10");
   });
 });
 

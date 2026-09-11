@@ -12,6 +12,10 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.67",
+    "@clerk/nextjs": "^7.9.2",
+    "@sentry/nextjs": "^10.74.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.4",
     "ai": "^7.0.97",
     "isomorphic-dompurify": "^4.2.0",
     "marked": "^18.0.12",

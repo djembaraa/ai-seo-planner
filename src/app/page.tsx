@@ -5,6 +5,7 @@ import { useState, useCallback, useRef } from "react";
 import { HeroSection } from "@/components/hero-section";
 import { ResultDashboard } from "@/components/result-dashboard";
 import { ResultSkeleton } from "@/components/result-skeleton";
+import { AuthControls } from "@/components/auth-controls";
 import { useRecentSearches } from "@/lib/use-recent-searches";
 
 export default function Home() {
@@ -173,6 +174,7 @@ export default function Home() {
           >
             GitHub
           </a>
+          <AuthControls />
         </nav>
       </header>
 

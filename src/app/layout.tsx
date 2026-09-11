@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
@@ -90,6 +91,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const content = (
+    <>
+      {children}
+      <SiteFooter />
+    </>
+  );
+
   return (
     <html lang="en">
       <head>
@@ -99,8 +108,13 @@ export default function RootLayout({
         />
       </head>
       <body className={`${montserrat.variable} font-sans antialiased`}>
-        {children}
-        <SiteFooter />
+        {clerkPublishableKey ? (
+          <ClerkProvider publishableKey={clerkPublishableKey}>
+            {content}
+          </ClerkProvider>
+        ) : (
+          content
+        )}
       </body>
     </html>
   );

@@ -1,11 +1,13 @@
 import { google } from "@ai-sdk/google";
+import * as Sentry from "@sentry/nextjs";
 import { streamText } from "ai";
 import { generateRequestSchema } from "@/lib/validation";
-import { validateEnv } from "@/lib/env";
+import { validateEnv, validateEnterpriseEnv } from "@/lib/env";
+import { getTenantIdentity } from "@/lib/auth";
 import { SEO_SYSTEM_PROMPT } from "@/lib/prompts";
 import {
-  getRateLimitKey,
-  checkRateLimit,
+  getTenantRateLimitKey,
+  checkDistributedRateLimit,
   rateLimitHeaders,
 } from "@/lib/rate-limit";
 
@@ -24,6 +26,15 @@ function jsonError(
 }
 
 class RequestBodyTooLargeError extends Error {}
+
+function captureRouteException(stage: string, error: unknown): void {
+  Sentry.captureException(new Error(`Generation route ${stage} failed`), {
+    tags: { route: "/api/generate", stage },
+    extra: {
+      errorType: error instanceof Error ? error.name : typeof error,
+    },
+  });
+}
 
 async function readJsonBody(req: Request): Promise<unknown> {
   if (!req.body) return JSON.parse(await req.text());
@@ -58,10 +69,36 @@ async function readJsonBody(req: Request): Promise<unknown> {
 }
 
 export async function POST(req: Request) {
+  let authResult: Awaited<ReturnType<typeof getTenantIdentity>>;
+  try {
+    authResult = await getTenantIdentity();
+  } catch (error) {
+    captureRouteException("auth", error);
+    return jsonError("Authentication service unavailable", 503);
+  }
+
+  if (authResult.status === "not-configured") {
+    return jsonError("Authentication is not configured", 503);
+  }
+  if (authResult.status === "unauthenticated") {
+    return jsonError("Authentication required", 401);
+  }
+  if (authResult.status === "organization-required") {
+    return jsonError("An active organization is required", 403);
+  }
+
   const env = validateEnv();
   if (!env.valid) {
     return jsonError(
       `Server misconfiguration: missing ${env.missing.join(", ")}`,
+      500
+    );
+  }
+
+  const enterpriseEnv = validateEnterpriseEnv();
+  if (process.env.NODE_ENV === "production" && !enterpriseEnv.valid) {
+    return jsonError(
+      `Server misconfiguration: missing ${enterpriseEnv.missing.join(", ")}`,
       500
     );
   }
@@ -91,8 +128,15 @@ export async function POST(req: Request) {
     return jsonError(firstError.message, 400);
   }
 
-  const rateKey = getRateLimitKey(req);
-  const { limited, remaining, resetAt } = checkRateLimit(rateKey);
+  const rateKey = getTenantRateLimitKey(req, authResult.identity);
+  let rateLimitResult;
+  try {
+    rateLimitResult = await checkDistributedRateLimit(rateKey);
+  } catch (error) {
+    captureRouteException("rate_limit", error);
+    return jsonError("Rate limiting service unavailable", 503);
+  }
+  const { limited, remaining, resetAt } = rateLimitResult;
   const headers = rateLimitHeaders(remaining, resetAt);
 
   if (limited) {
@@ -113,6 +157,9 @@ export async function POST(req: Request) {
     temperature: 0.7,
     maxOutputTokens: 5000,
     abortSignal: signal,
+    onError: ({ error }) => {
+      captureRouteException("generation", error);
+    },
   });
 
   return result.toTextStreamResponse({ headers });
