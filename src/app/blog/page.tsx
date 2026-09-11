@@ -1,32 +1,30 @@
+import { PageHeader } from "@/components/page-header";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Blog | AI SEO Planner",
-};
+export const metadata = { title: "Blog | AI SEO Planner" };
 
-export default function Page() {
+const posts = [
+  { title: "How Semantic Search Changed in 2026", cat: "SEO Strategy", date: "Sep 5" },
+  { title: "The End of Keyword Density: What Matters Now", cat: "Content", date: "Aug 22" },
+  { title: "Case Study: Scaling to 100k Traffic in 3 Months", cat: "Growth", date: "Aug 10" },
+  { title: "Why Topic Clusters are the New Backlinks", cat: "SEO Strategy", date: "Jul 28" }
+];
+
+export default function BlogPage() {
   return (
-    <main className="pt-32 pb-24 min-h-screen bg-canvas">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-ink-secondary hover:text-amber-accent transition-colors mb-8">
-          <ArrowLeft className="w-4 h-4" /> Back to Home
-        </Link>
-        
-        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-deep mb-6">
-          Blog
-        </h1>
-        
-        <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-            <span className="text-2xl">??</span>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-deep mb-3">Page Under Construction</h2>
-          <p className="text-ink-secondary max-w-md mx-auto leading-relaxed">
-            We are currently building this page. The Blog content will be available here soon. 
-            Check back later or subscribe to our newsletter for updates!
-          </p>
-        </div>
+    <main className="pt-24 pb-24 bg-canvas min-h-screen">
+      <PageHeader badge="Our Blog" title="Latest Insights" description="Deep dives into AI, content marketing, and algorithm updates." />
+      <div className="max-w-6xl mx-auto px-4 mt-12 grid md:grid-cols-2 gap-8">
+        {posts.map((post, i) => (
+          <Link key={i} href="#" className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-amber-accent font-bold text-sm tracking-wider uppercase">{post.cat}</span>
+              <span className="text-slate-400 text-sm font-medium">{post.date}</span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-deep group-hover:text-amber-hover transition-colors">{post.title}</h2>
+            <p className="text-slate-500 mt-4 leading-relaxed line-clamp-2">Learn the exact strategies and step-by-step methodologies we use to stay ahead of the continuous changes in Google&apos;s ranking algorithms.</p>
+          </Link>
+        ))}
       </div>
     </main>
   );

@@ -19,7 +19,7 @@ export function HeroSection({
   onClearRecent,
 }: HeroSectionProps) {
   const [keyword, setKeyword] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
   const router = useRouter();

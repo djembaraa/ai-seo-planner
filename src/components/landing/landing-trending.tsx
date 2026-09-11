@@ -30,7 +30,7 @@ export function LandingTrending({ onSelectKeyword }: LandingTrendingProps) {
   };
 
   return (
-    <section className="py-24 px-4 sm:px-6 max-w-7xl mx-auto">
+    <section className="py-24 px-4 sm:px-6 max-w-7xl mx-auto w-full overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-12 gap-6">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -61,45 +61,47 @@ export function LandingTrending({ onSelectKeyword }: LandingTrendingProps) {
         </div>
       </div>
 
-      <div 
-        ref={scrollRef}
-        className="flex overflow-x-auto pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 gap-6 snap-x hide-scrollbar"
-      >
-        {trendingItems.map((item, index) => {
-          const Icon = item.icon;
-          return (
-            <motion.div
-              key={item.keyword}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                onSelectKeyword(item.keyword);
-              }}
-              className="min-w-[280px] sm:min-w-[340px] bg-slate-deep rounded-3xl p-8 cursor-pointer group hover:shadow-2xl hover:shadow-slate-deep/20 transition-all snap-start relative overflow-hidden flex flex-col"
-            >
-              {/* Decorative corner */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-amber-accent/10 transition-colors" />
-              
-              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-12 group-hover:bg-amber-accent/20 transition-colors">
-                <Icon className="w-8 h-8 text-amber-accent" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-6 group-hover:text-amber-accent transition-colors">{item.keyword}</h3>
-              <div className="flex items-center gap-4 text-sm font-medium mt-auto">
-                <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  {item.volume} Vol
+      <div className="relative w-full overflow-hidden">
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto pb-8 gap-6 snap-x hide-scrollbar"
+        >
+          {trendingItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={item.keyword}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  onSelectKeyword(item.keyword);
+                }}
+                className="min-w-[280px] sm:min-w-[340px] bg-slate-deep rounded-3xl p-8 cursor-pointer group hover:shadow-2xl hover:shadow-slate-deep/20 transition-all snap-start relative overflow-hidden flex flex-col"
+              >
+                {/* Decorative corner */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-amber-accent/10 transition-colors" />
+                
+                <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center mb-12 group-hover:bg-amber-accent/20 transition-colors">
+                  <Icon className="w-8 h-8 text-amber-accent" />
                 </div>
-                <div className="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-lg">
-                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                  {item.difficulty} Diff
+                <h3 className="text-xl font-bold text-white mb-6 group-hover:text-amber-accent transition-colors">{item.keyword}</h3>
+                <div className="flex items-center gap-2 text-xs font-bold mt-auto overflow-hidden">
+                  <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-400/10 px-2.5 py-1.5 rounded-lg whitespace-nowrap">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                    {item.volume} Vol
+                  </div>
+                  <div className="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-2.5 py-1.5 rounded-lg whitespace-nowrap">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+                    {item.difficulty} Diff
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
       
       <style dangerouslySetInnerHTML={{__html: `

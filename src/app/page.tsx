@@ -59,7 +59,7 @@ export default function Home() {
 
         {/* Landing Page Content - Hidden when app is actively used */}
         {!hasResultOrGenerating && (
-          <div className="flex flex-col gap-0 mt-8">
+          <div className="flex flex-col gap-0 mt-8 w-full overflow-hidden">
             <LandingTrending onSelectKeyword={generatePlan} />
             <LandingCTA />
           </div>

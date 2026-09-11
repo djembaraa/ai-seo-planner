@@ -119,7 +119,7 @@ export function LandingBanners() {
               transition={{ delay: 0.1 }}
               className="text-slate-300 text-lg md:text-xl max-w-lg leading-relaxed"
             >
-              Don't just target one keyword. Our engine builds a complete semantic cluster around your topic, establishing topical authority in hours instead of months.
+              Don&apos;t just target one keyword. Our engine builds a complete semantic cluster around your topic, establishing topical authority in hours instead of months.
             </motion.p>
             
             <motion.div

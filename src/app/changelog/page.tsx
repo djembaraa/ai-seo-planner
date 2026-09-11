@@ -1,32 +1,29 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
-export const metadata = {
-  title: "Changelog | AI SEO Planner",
-};
+export const metadata = { title: "Changelog | AI SEO Planner" };
 
-export default function Page() {
+const logs = [
+  { version: "v2.4.0", date: "Sep 10, 2026", title: "New AI Output Formats", desc: "Added 5 new auto-detected output formats including Developer Guides and Ecommerce Categories. Improved the speed of intent clustering by 40%." },
+  { version: "v2.3.1", date: "Aug 28, 2026", title: "Export to Notion", desc: "You can now directly export your generated SEO plans to your Notion workspace with a single click. Supported properties include status, assignee, and target keyword." },
+  { version: "v2.3.0", date: "Aug 15, 2026", title: "Dark Mode Optimization", desc: "Completely overhauled the dark mode contrast across all landing pages to meet WCAG AAA accessibility standards." }
+];
+
+export default function ChangelogPage() {
   return (
-    <main className="pt-32 pb-24 min-h-screen bg-canvas">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-ink-secondary hover:text-amber-accent transition-colors mb-8">
-          <ArrowLeft className="w-4 h-4" /> Back to Home
-        </Link>
-        
-        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-deep mb-6">
-          Changelog
-        </h1>
-        
-        <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200 shadow-sm min-h-[400px] flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-            <span className="text-2xl">??</span>
+    <main className="pt-24 pb-24 bg-canvas min-h-screen">
+      <PageHeader badge="Updates" title="Product Changelog" description="New updates and improvements to our AI engine." />
+      <div className="max-w-3xl mx-auto px-4 mt-12 space-y-8">
+        {logs.map((log, i) => (
+          <div key={i} className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm relative pl-12 md:pl-16">
+            <div className="absolute top-10 left-0 w-8 md:w-12 h-[2px] bg-amber-accent" />
+            <div className="flex items-center gap-4 mb-3">
+              <span className="bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-lg text-sm">{log.version}</span>
+              <span className="text-slate-400 text-sm font-medium">{log.date}</span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-deep mb-3">{log.title}</h2>
+            <p className="text-slate-600 leading-relaxed">{log.desc}</p>
           </div>
-          <h2 className="text-2xl font-bold text-slate-deep mb-3">Page Under Construction</h2>
-          <p className="text-ink-secondary max-w-md mx-auto leading-relaxed">
-            We are currently building this page. The Changelog content will be available here soon. 
-            Check back later or subscribe to our newsletter for updates!
-          </p>
-        </div>
+        ))}
       </div>
     </main>
   );

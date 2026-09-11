@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MessageSquare, Globe, Hash, Mail } from "lucide-react";
+import { MessageSquare, Globe, Hash } from "lucide-react";
 
 export function SiteFooter() {
   return (
@@ -32,7 +32,7 @@ export function SiteFooter() {
               </span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              The world's fastest way to generate search intent, keyword clusters, and content strategies using advanced AI.
+              The world&apos;s fastest way to generate search intent, keyword clusters, and content strategies using advanced AI.
             </p>
             <div className="flex items-center gap-4 pt-2">
               <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-amber-accent hover:text-white transition-colors">
@@ -77,14 +77,14 @@ export function SiteFooter() {
               <li><Link href="/about" className="text-slate-400 hover:text-amber-accent transition-colors text-sm">About Us</Link></li>
               <li><Link href="/contact" className="text-slate-400 hover:text-amber-accent transition-colors text-sm">Contact Us</Link></li>
               <li><Link href="/privacy" className="text-slate-400 hover:text-amber-accent transition-colors text-sm">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="text-slate-400 hover:text-amber-accent transition-colors text-sm">Terms & Conditions</Link></li>
+              <li><Link href="/terms" className="text-slate-400 hover:text-amber-accent transition-colors text-sm">Terms &amp; Conditions</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm font-medium text-slate-500">
-            © {new Date().getFullYear()} AI SEO Planner. Built by Djembar Arafat.
+            &copy; {new Date().getFullYear()} AI SEO Planner. Built by Djembar Arafat.
           </p>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
