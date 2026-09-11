@@ -7,7 +7,6 @@ import { useSeoGenerate } from "@/lib/use-seo-generate";
 
 // Import landing components
 import { LandingTrending } from "@/components/landing/landing-trending";
-import { LandingBanners } from "@/components/landing/landing-banners";
 import { LandingCTA } from "@/components/landing/landing-cta";
 
 export default function Home() {
@@ -33,7 +32,7 @@ export default function Home() {
         Skip to main content
       </a>
 
-      <main id="main-content" role="main" className="pb-12">
+      <main id="main-content" role="main">
         <HeroSection
           onSubmit={generatePlan}
           isLoading={isLoading}
@@ -62,7 +61,6 @@ export default function Home() {
         {!hasResultOrGenerating && (
           <div className="flex flex-col gap-0 mt-8">
             <LandingTrending onSelectKeyword={generatePlan} />
-            <LandingBanners />
             <LandingCTA />
           </div>
         )}

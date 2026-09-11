@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Search, Sparkles, FileText, TrendingUp } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface HeroSectionProps {
   onSubmit: (keyword: string) => void;
@@ -18,13 +19,29 @@ export function HeroSection({
   onClearRecent,
 }: HeroSectionProps) {
   const [keyword, setKeyword] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      // Avoid calling setState synchronously during render/effect cycle
+      const timeoutId = setTimeout(() => {
+        setKeyword(q);
+        onSubmit(q);
+        // Remove query param after triggering so it doesn't re-trigger on refresh
+        router.replace("/", { scroll: false });
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [searchParams, onSubmit, router]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = keyword.trim();
-    if (trimmed) {
-      onSubmit(trimmed);
+    if (keyword.trim()) {
+      onSubmit(keyword.trim());
     }
   };
 
@@ -46,18 +63,16 @@ export function HeroSection({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-accent">
-                AI-Powered SEO Strategy
-              </p>
-              <h1 className="text-white text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-[1.08] tracking-tight">
-                Content plans
-                <br />
-                that rank.
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-hero-glass border border-hero-glass-hover mb-6">
+                <span className="w-2 h-2 rounded-full bg-amber-accent animate-pulse"></span>
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-accent">AI-Powered SEO Strategy</span>
+              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6">
+                Content plans <br />
+                <span className="text-on-dark-subtle">that rank.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-lg font-light leading-relaxed text-on-dark-muted sm:text-xl">
-                Enter a target keyword and get a full SEO content strategy —
-                search intent, keyword clusters, outlines, and meta data —
-                streamed in real time.
+              <p className="text-lg sm:text-xl text-on-dark-muted max-w-xl leading-relaxed">
+                Enter a target keyword and get a full SEO content strategy. Search intent, keyword clusters, outlines, and meta data streamed in real time.
               </p>
             </motion.div>
 
