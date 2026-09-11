@@ -3,7 +3,7 @@ import { useAuth, useClerk } from "@clerk/nextjs";
 import { useRecentSearches } from "@/lib/use-recent-searches";
 
 export function useSeoGenerate() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, userId } = useAuth();
   const clerk = useClerk();
   
   const [content, setContent] = useState("");
@@ -20,6 +20,17 @@ export function useSeoGenerate() {
       if (isLoaded && !isSignedIn) {
         clerk.openSignIn();
         return;
+      }
+
+      // Check free plan usage limits
+      if (userId) {
+        const attemptsKey = `ai_seo_planner_attempts_${userId}`;
+        const attempts = parseInt(localStorage.getItem(attemptsKey) || "0", 10);
+        
+        if (attempts >= 3) {
+          setError("You have reached the maximum of 3 generations for the Free Plan. Please wait for the Pro upgrade.");
+          return;
+        }
       }
 
       if (abortRef.current) {
@@ -97,6 +108,13 @@ export function useSeoGenerate() {
         setContent(accumulated);
 
         addRecent(keyword);
+
+        // Increment attempts on success
+        if (userId) {
+          const attemptsKey = `ai_seo_planner_attempts_${userId}`;
+          const attempts = parseInt(localStorage.getItem(attemptsKey) || "0", 10);
+          localStorage.setItem(attemptsKey, (attempts + 1).toString());
+        }
       } catch (err) {
         if (
           err instanceof DOMException &&

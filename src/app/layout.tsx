@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { BetaWidget } from "@/components/beta-widget";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -98,6 +99,7 @@ export default function RootLayout({
       <SiteHeader />
       {children}
       <SiteFooter />
+      <BetaWidget />
     </>
   );
 
