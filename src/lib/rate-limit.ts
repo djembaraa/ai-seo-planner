@@ -1,3 +1,7 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { hasUpstashConfiguration } from "@/lib/env";
+
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -6,6 +10,7 @@ interface RateLimitEntry {
 const rateLimitMap = new Map<string, RateLimitEntry>();
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 10;
+export const RATE_LIMIT_LIMIT = RATE_LIMIT_MAX_REQUESTS;
 
 let lastCleanup = Date.now();
 const CLEANUP_INTERVAL_MS = 5 * 60_000;
@@ -38,6 +43,14 @@ export function getRateLimitKey(req: Request): string {
   }
 
   return "unknown";
+}
+
+export function getTenantRateLimitKey(
+  req: Request,
+  identity: { orgId?: string | null; userId: string }
+): string {
+  const orgPart = identity.orgId ? `org:${identity.orgId}:` : '';
+  return `${orgPart}user:${identity.userId}:ip:${getRateLimitKey(req)}`;
 }
 
 export function checkRateLimit(key: string): {
@@ -79,5 +92,32 @@ export function rateLimitHeaders(
     "X-RateLimit-Limit": String(RATE_LIMIT_MAX_REQUESTS),
     "X-RateLimit-Remaining": String(remaining),
     "X-RateLimit-Reset": String(Math.ceil(resetAt / 1000)),
+  };
+}
+
+export async function checkDistributedRateLimit(key: string): Promise<{
+  limited: boolean;
+  remaining: number;
+  resetAt: number;
+}> {
+  if (!hasUpstashConfiguration()) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Upstash rate limiting is not configured");
+    }
+
+    return checkRateLimit(key);
+  }
+
+  const ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(RATE_LIMIT_MAX_REQUESTS, "60 s"),
+    prefix: "ai-seo-planner",
+  });
+  const result = await ratelimit.limit(key);
+
+  return {
+    limited: !result.success,
+    remaining: result.remaining,
+    resetAt: result.reset,
   };
 }
