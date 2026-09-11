@@ -103,9 +103,13 @@ src/
 │   ├── markdown-section.tsx    # Individual section card with copy button
 │   ├── result-skeleton.tsx     # Loading skeleton shown while waiting for first chunk
 │   ├── tag-cloud.tsx           # Keyword tag pill display
-│   └── copy-button.tsx         # Clipboard copy with visual feedback
+│   ├── copy-button.tsx         # Clipboard copy with visual feedback
+│   ├── section-icon.tsx        # Shared section icon renderer
+│   └── site-footer.tsx         # Global attribution footer
 └── lib/
+  ├── constants.ts            # Shared UI and section constants
     ├── parse-seo.ts            # Markdown section parser and tag extractor
+  ├── prompts.ts              # AI system prompt
     ├── rate-limit.ts           # In-memory IP-based rate limiter
     ├── validation.ts           # Zod request schema
     ├── env.ts                  # Environment variable validation
@@ -134,8 +138,12 @@ Streams an SEO content plan as plain text (Markdown).
 
 - `200 OK` — `text/plain` stream (chunked transfer encoding)
 - `400 Bad Request` — Invalid or empty keyword
+- `413 Payload Too Large` — Request body exceeds the 10 KB limit
+- `415 Unsupported Media Type` — Request is not JSON
 - `429 Too Many Requests` — Rate limit exceeded (10 req / 60 s per IP)
 - `500 Internal Server Error` — Missing or invalid server configuration
+
+The endpoint caps AI output at 5,000 tokens and cancels generation after 55 seconds or when the client disconnects.
 
 **Rate limit headers**
 
@@ -172,7 +180,8 @@ Unit tests cover the SEO section parser (`parse-seo.ts`), rate limiter (`rate-li
 
 1. Click the button above or import the repository in the [Vercel dashboard](https://vercel.com/new)
 2. Add the environment variable `GOOGLE_GENERATIVE_AI_API_KEY` in the project settings
-3. Deploy — Vercel handles the rest
+3. Add `NEXT_PUBLIC_SITE_URL` with the production URL, for example `https://your-domain.com`
+4. Deploy — Vercel handles the rest
 
 ### Self-hosted
 
@@ -181,7 +190,7 @@ npm run build
 npm run start
 ```
 
-Set `GOOGLE_GENERATIVE_AI_API_KEY` in your hosting environment before starting.
+Set `GOOGLE_GENERATIVE_AI_API_KEY` and `NEXT_PUBLIC_SITE_URL` in your hosting environment before starting.
 
 > **Note:** The built-in rate limiter uses in-process memory and resets on server restart. For production deployments with multiple instances, replace it with a distributed store (e.g., Redis via Upstash).
 
