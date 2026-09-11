@@ -3,6 +3,15 @@
   --color-surface: #FFFFFF;
   --color-canvas: #FAF9F7;
   --color-slate-deep: #0F172A;
+  --color-hero-mid: #1E293B;
+  --color-hero-deep: #0C1222;
+  --color-hero-glass: rgb(255 255 255 / 0.07);
+  --color-hero-glass-hover: rgb(255 255 255 / 0.12);
+  --color-on-dark: #FFFFFF;
+  --color-on-dark-muted: #94A3B8;
+  --color-on-dark-subtle: #64748B;
+  --color-on-dark-faint: #475569;
+  --color-on-dark-focus: rgb(255 255 255 / 0.1);
   --color-amber-accent: #D97706;
   --color-amber-light: #FEF3C7;
   --color-amber-hover: #B45309;
@@ -12,6 +21,7 @@
   --color-ink: #1C1917;
   --color-ink-secondary: #44403C;
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --background-image-hero-gradient: linear-gradient(135deg, var(--color-slate-deep), var(--color-hero-mid), var(--color-hero-deep));
 }
 
 html {
@@ -24,6 +34,12 @@ body {
   background: var(--color-canvas);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.hero-grid {
+  opacity: 0.03;
+  background-image: radial-gradient(circle at 1px 1px, var(--color-on-dark) 1px, transparent 0);
+  background-size: 32px 32px;
 }
 
 .markdown-content {

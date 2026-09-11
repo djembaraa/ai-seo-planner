@@ -4,58 +4,14 @@ import { useMemo } from "react";
 import { MarkdownSection } from "./markdown-section";
 import { TagCloud } from "./tag-cloud";
 import { CopyButton } from "./copy-button";
+import { SectionIcon } from "./section-icon";
+import { SECTION_DEFINITIONS, SECTION_TITLES } from "@/lib/constants";
 import { parseSeoSections, extractTags } from "@/lib/parse-seo";
 
 interface ResultDashboardProps {
   content: string;
   isStreaming: boolean;
 }
-
-const SECTION_META: Record<
-  string,
-  { icon: React.ReactNode; description: string }
-> = {
-  "Search Intent": {
-    icon: (
-      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    ),
-    description: "Understanding why users search for this keyword",
-  },
-  "Related Keywords": {
-    icon: (
-      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-      </svg>
-    ),
-    description: "Keyword variations and long-tail opportunities",
-  },
-  "Content Ideas & Titles": {
-    icon: (
-      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-    ),
-    description: "Actionable content formats and title suggestions",
-  },
-  "Content Outline": {
-    icon: (
-      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-      </svg>
-    ),
-    description: "Structured H2/H3 outline for your pillar article",
-  },
-  "Meta Data": {
-    icon: (
-      <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-      </svg>
-    ),
-    description: "Optimized title tags, descriptions, and schema markup",
-  },
-};
 
 export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) {
   const sections = useMemo(() => parseSeoSections(content), [content]);
@@ -64,27 +20,12 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
     [sections]
   );
 
-  const sectionOrder = [
-    "Search Intent",
-    "Related Keywords",
-    "Content Ideas & Titles",
-    "Content Outline",
-    "Meta Data",
-  ];
-
   const hasAnyContent = Object.keys(sections).length > 0;
-  const progressSteps = [
-    { section: "Search Intent", label: "Mapping search intent and audience needs" },
-    { section: "Related Keywords", label: "Exploring keyword opportunities" },
-    { section: "Content Ideas & Titles", label: "Developing content angles that can compete" },
-    { section: "Content Outline", label: "Structuring a useful, search-ready article" },
-    { section: "Meta Data", label: "Polishing on-page SEO recommendations" },
-  ];
   const activeStep = Math.max(
     0,
-    progressSteps.findIndex(({ section }) => !sections[section])
+    SECTION_DEFINITIONS.findIndex(({ title }) => !sections[title])
   );
-  const progress = Math.round(((activeStep + 1) / progressSteps.length) * 100);
+  const progress = Math.round(((activeStep + 1) / SECTION_DEFINITIONS.length) * 100);
 
   if (!hasAnyContent && !isStreaming) return null;
 
@@ -99,7 +40,7 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
       )}
 
       {isStreaming && hasAnyContent && (
-        <GenerationStatus label={progressSteps[activeStep].label} progress={progress} />
+        <GenerationStatus label={SECTION_DEFINITIONS[activeStep].progressLabel} progress={progress} />
       )}
 
       {hasAnyContent && (
@@ -127,11 +68,11 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
             </div>
           )}
 
-          {sectionOrder.map((title, i) => {
+          {SECTION_TITLES.map((title, i) => {
             const sectionContent = sections[title];
             if (!sectionContent) return null;
 
-            const meta = SECTION_META[title];
+            const definition = SECTION_DEFINITIONS[i];
 
             return (
               <article
@@ -141,7 +82,7 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
               >
                 <MarkdownSection
                   title={title}
-                  icon={meta?.icon ?? null}
+                  icon={<SectionIcon path={definition.iconPath} />}
                   content={sectionContent}
                 />
               </article>
@@ -163,7 +104,7 @@ export function ResultDashboard({ content, isStreaming }: ResultDashboardProps) 
 function GenerationStatus({ label, progress }: { label: string; progress: number }) {
   return (
     <div
-      className="mb-6 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 animate-fade-up"
+      className="mb-6 rounded-xl bg-amber-50/70 px-4 py-3 shadow-sm animate-fade-up"
       role="status"
       aria-live="polite"
     >
